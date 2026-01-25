@@ -12,6 +12,30 @@ from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 from rest_framework_simplejwt.tokens import RefreshToken
 
+def get_threshold_settings():
+    """
+    Get threshold settings from .env with safe fallbacks.
+    Returns: (warning_percentile, outlier_iqr_multiplier)
+    Defaults to (0.75, 1.5) if not set or invalid.
+    """
+    try:
+        warning = float(os.getenv('WARNING_PERCENTILE', '0.75'))
+        # Validate range
+        if not (0.5 <= warning <= 0.95):
+            warning = 0.75
+    except (ValueError, TypeError):
+        warning = 0.75
+    
+    try:
+        outlier = float(os.getenv('OUTLIER_IQR_MULTIPLIER', '1.5'))
+        # Validate range
+        if not (0.5 <= outlier <= 3.0):
+            outlier = 1.5
+    except (ValueError, TypeError):
+        outlier = 1.5
+    
+    return warning, outlier
+
 class RegisterView(APIView):
     permission_classes = [AllowAny]
     
@@ -116,20 +140,103 @@ class FileUploadView(APIView):
             if not required_columns.issubset(df.columns):
                 raise ValueError(f"Missing required columns. Expected: {required_columns}")
 
-            # We're calculating some basic stats to show on the dashboard immediately.
-            # This saves the frontend from having to iterate through thousands of rows for simple counts.
+            # === ENHANCED ANALYTICS ===
+            
+            # 1. Basic Statistics with Min/Max/Std Dev
+            numeric_cols = ['Flowrate', 'Pressure', 'Temperature']
             stats = {
                 "total_count": int(len(df)),
-                # Using .get() style defaults just in case columns are missing or named slightly differently
-                "avg_flowrate": float(df['Flowrate'].mean()) if 'Flowrate' in df.columns else 0,
-                "avg_pressure": float(df['Pressure'].mean()) if 'Pressure' in df.columns else 0,
-                "avg_temperature": float(df['Temperature'].mean()) if 'Temperature' in df.columns else 0,
-                "type_distribution": df['Type'].value_counts().to_dict() if 'Type' in df.columns else {}
+                "avg_flowrate": float(df['Flowrate'].mean()),
+                "avg_pressure": float(df['Pressure'].mean()),
+                "avg_temperature": float(df['Temperature'].mean()),
+                "min_flowrate": float(df['Flowrate'].min()),
+                "max_flowrate": float(df['Flowrate'].max()),
+                "std_flowrate": float(df['Flowrate'].std()),
+                "min_pressure": float(df['Pressure'].min()),
+                "max_pressure": float(df['Pressure'].max()),
+                "std_pressure": float(df['Pressure'].std()),
+                "min_temperature": float(df['Temperature'].min()),
+                "max_temperature": float(df['Temperature'].max()),
+                "std_temperature": float(df['Temperature'].std()),
+                "type_distribution": df['Type'].value_counts().to_dict()
             }
+            
+            # 2. Type-based Comparison
+            type_comparison = {}
+            for eq_type in df['Type'].unique():
+                type_df = df[df['Type'] == eq_type]
+                type_comparison[eq_type] = {
+                    "count": int(len(type_df)),
+                    "avg_flowrate": float(type_df['Flowrate'].mean()),
+                    "avg_pressure": float(type_df['Pressure'].mean()),
+                    "avg_temperature": float(type_df['Temperature'].mean())
+                }
+            stats['type_comparison'] = type_comparison
+            
+            # 3. Correlation Matrix
+            correlation_matrix = df[numeric_cols].corr().to_dict()
+            stats['correlation_matrix'] = correlation_matrix
+            
+            # 4. Outlier Detection (using IQR method)
+            # Get configurable thresholds from .env
+            warning_percentile, iqr_multiplier = get_threshold_settings()
+            
+            outliers = []
+            for col in numeric_cols:
+                Q1 = df[col].quantile(0.25)
+                Q3 = df[col].quantile(0.75)
+                IQR = Q3 - Q1
+                lower_bound = Q1 - iqr_multiplier * IQR  # Configurable
+                upper_bound = Q3 + iqr_multiplier * IQR  # Configurable
+                
+                outlier_mask = (df[col] < lower_bound) | (df[col] > upper_bound)
+                for idx in df[outlier_mask].index:
+                    equipment_name = df.loc[idx, 'Equipment Name']
+                    if equipment_name not in [o['equipment'] for o in outliers]:
+                        outliers.append({
+                            'equipment': equipment_name,
+                            'parameters': []
+                        })
+                    
+                    outlier_entry = next(o for o in outliers if o['equipment'] == equipment_name)
+                    outlier_entry['parameters'].append({
+                        'parameter': col,
+                        'value': float(df.loc[idx, col]),
+                        'lower_bound': float(lower_bound),
+                        'upper_bound': float(upper_bound)
+                    })
+            
+            stats['outliers'] = outliers
+            
+            # 5. Health Status for each equipment
+            data_json = df.to_dict(orient='records')
+            for i, row in enumerate(data_json):
+                equipment_name = row['Equipment Name']
+                
+                # Check if equipment has outliers
+                is_outlier = any(o['equipment'] == equipment_name for o in outliers)
+                
+                # Simple health status based on parameter ranges
+                # Critical: Any parameter is an outlier
+                # Warning: Parameters above warning_percentile (configurable)
+                # Normal: Everything else
+                if is_outlier:
+                    health_status = 'critical'
+                    health_color = '#ef4444'  # red
+                elif (row['Flowrate'] > df['Flowrate'].quantile(warning_percentile) or 
+                      row['Pressure'] > df['Pressure'].quantile(warning_percentile) or 
+                      row['Temperature'] > df['Temperature'].quantile(warning_percentile)):
+                    health_status = 'warning'
+                    health_color = '#f59e0b'  # yellow
+                else:
+                    health_status = 'normal'
+                    health_color = '#10b981'  # green
+                
+                data_json[i]['health_status'] = health_status
+                data_json[i]['health_color'] = health_color
 
             # We also send back the raw data so the frontend can display the table.
             # .to_dict('records') gives us a nice list of JSON objects.
-            data_json = df.to_dict(orient='records')
 
             # Save the results back to the instance so we don't have to re-process it later.
             upload_instance.summary = stats

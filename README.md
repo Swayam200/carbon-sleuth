@@ -1,76 +1,55 @@
 # Chemical Equipment Parameter Visualizer
 
-A hybrid Web and Desktop application for analyzing chemical equipment data.
+A hybrid Web and Desktop application for analyzing chemical equipment data with advanced analytics, outlier detection, and health status monitoring.
 
-## Project Structure
+## 📋 Project Structure
 
-- `backend/`: Django REST Framework API
-- `web-frontend/`: React + Vite + Chart.js
-- `desktop-frontend/`: PyQt5 + Matplotlib
+- **`backend/`** - Django REST Framework API with JWT authentication
+- **`web-frontend/`** - React + Vite + Chart.js web application
+- **`desktop-frontend/`** - PyQt5 + Matplotlib desktop application
 
-## Setup Instructions
+📖 **Detailed Documentation:**
+
+- [Web Frontend README](web-frontend/README.md) - Analytics features, health status logic, threshold configuration
+- [Desktop Frontend README](desktop-frontend/README.md) - UI features, visualization details, platform notes
+- [Backend README](backend/README.md) - Admin panel, user management, database operations
+
+## ⚡ Quick Start
 
 ### Prerequisites
 
 - Python 3.8+
-- Node.js & npm
+- Node.js & npm (for web frontend)
 
 ### 1. Backend Setup
-
-#### Step 1: Create and Activate Virtual Environment
 
 ```bash
 cd backend
 python3 -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-```
-
-#### Step 2: Install Dependencies
-
-```bash
+source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt
-# Or manually: pip install django djangorestframework pandas matplotlib reportlab django-cors-headers python-dotenv
 ```
 
-#### Step 3: Configure Environment Variables
-
-Create a `.env` file in the `backend/` directory with the following:
+Create `.env` file:
 
 ```env
 DEBUG=True
 SECRET_KEY=your-secret-key-here
-ALLOWED_HOSTS=127.0.0.1,localhost
-CORS_ALLOWED_ORIGINS=http://localhost:5173
 ADMIN_USERNAME=admin
-ADMIN_PASSWORD=your_secure_password_here
+ADMIN_PASSWORD=your_secure_password
 ADMIN_EMAIL=admin@example.com
+CORS_ALLOWED_ORIGINS=http://localhost:5173
 ```
 
-**Important:** Change `ADMIN_PASSWORD` to a secure password of your choice. This will be your admin login credentials.
-
-#### Step 4: Run Migrations
+Initialize database:
 
 ```bash
 python manage.py migrate
-```
-
-#### Step 5: Create Admin User
-
-```bash
 python manage.py initadmin
-```
-
-This command reads credentials from your `.env` file and creates/updates the superuser account.
-
-#### Step 6: Start the Development Server
-
-```bash
 python manage.py runserver
 ```
 
-_The API will run at http://127.0.0.1:8000/_
-
-**To change admin password later:** Simply update `ADMIN_PASSWORD` in `.env` and run `python manage.py initadmin` again.
+Backend runs at: **http://127.0.0.1:8000**
 
 ### 2. Web Frontend Setup
 
@@ -80,76 +59,191 @@ npm install
 npm run dev
 ```
 
-_The Web App will run at http://localhost:5173/_
+Web app runs at: **http://localhost:5173**
 
 ### 3. Desktop App Setup
 
-Ensure the backend is running first.
+Ensure backend is running first:
 
 ```bash
 cd desktop-frontend
-# Ensure pandas, pyqt5, requests, matplotlib are installed in your python environment
+pip install -r requirements.txt  # PyQt5, matplotlib, requests, numpy
 python main.py
 ```
 
-## Features
+## 🎯 Core Features
 
-- **User Authentication**: Register and login with JWT tokens
-- **CSV Upload**: Drag & Drop (Web) or File Dialog (Desktop)
-- **Dashboard**: Interactive Charts and Statistics
-- **History**: View last 5 uploads
-- **PDF Report**: Generate downloadable reports (Web)
+### User Authentication
 
-## User Authentication
+- **Register**: Create account with username, email, password (8+ characters)
+- **Login**: JWT token-based authentication
+- **Per-User Data**: Uploads isolated by user account
 
-### For Regular Users
+### Data Analysis
 
-Both Web and Desktop applications support user registration and login:
+- **CSV Upload**: Drag & drop (web) or file dialog (desktop)
+- **Real-Time Processing**: Pandas-based statistical analysis
+- **5 Advanced Analytics**:
+  1. **Outlier Detection** - IQR method with customizable thresholds
+  2. **Type Comparison** - Compare parameters across equipment types
+  3. **Correlation Matrix** - Identify parameter relationships
+  4. **Enhanced Statistics** - Min/Max/StdDev for all parameters
+  5. **Health Status** - Color-coded equipment condition (Normal/Warning/Critical)
 
-**Web Frontend:**
+### Visualizations
 
-1. Visit http://localhost:5173/
-2. Click "Register" to create a new account
-3. Fill in username, email, and password (min 8 characters)
-4. After registration, you'll be automatically logged in
+- **Dashboard**: Interactive charts (Chart.js/Matplotlib)
+- **Upload History**: Last 5 uploads with click-to-load
+- **PDF Reports**: Generate downloadable analysis reports (web only)
 
-**Desktop Frontend:**
+## 🩺 Health Status System
 
-1. Launch the desktop app: `python main.py`
-2. Click "Don't have an account? Register"
-3. Fill in the registration form
-4. After successful registration, switch to login and enter credentials
+Equipment classified into 3 categories:
 
-### For Admin Users
+| Status          | Color  | Criteria                                           |
+| --------------- | ------ | -------------------------------------------------- |
+| 🟢 **Normal**   | Green  | Parameters within normal range (< 75th percentile) |
+| 🟡 **Warning**  | Yellow | Parameters in upper 25% (> 75th percentile)        |
+| 🔴 **Critical** | Red    | Parameters are statistical outliers (IQR method)   |
 
-Admin credentials are configured through the `.env` file in the `backend/` directory:
+**Thresholds:**
 
-- **Username:** Value of `ADMIN_USERNAME` (default: `admin`)
-- **Password:** Value of `ADMIN_PASSWORD` (set by you)
-- **Email:** Value of `ADMIN_EMAIL` (default: `admin@example.com`)
+- **Warning**: 75th percentile (top 25% of values)
+- **Critical**: IQR outliers (1.5 × IQR beyond Q1/Q3)
 
-**First Time Setup:** Run `python manage.py initadmin` after configuring your `.env` file.
+**Customization:** See [Web Frontend README](web-frontend/README.md#health-status-threshold-configuration) for details on making thresholds admin-configurable.
 
-**Updating Admin Password:** Edit `ADMIN_PASSWORD` in `.env` and run `python manage.py initadmin` again.
+## 🔧 Configuration
 
-### Viewing Registered Users
+## 🔧 Configuration
 
-Access the Django Admin Panel to manage users:
+### Environment Variables (`backend/.env`)
 
-```bash
-# Start the backend server
-cd backend
-source venv/bin/activate
-python manage.py runserver
+```env
+# Django Settings
+DEBUG=True
+SECRET_KEY=your-secret-key-here
+ALLOWED_HOSTS=127.0.0.1,localhost
 
-# Visit: http://127.0.0.1:8000/admin/
-# Login with admin credentials from .env
-# Navigate to "Users" section to view/manage all registered users
+# CORS
+CORS_ALLOWED_ORIGINS=http://localhost:5173
+
+# Admin Credentials
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD=your_secure_password
+ADMIN_EMAIL=admin@example.com
 ```
 
-### Resetting the Database
+### Admin Panel Access
 
-To clear all users and data:
+Visit: **http://127.0.0.1:8000/admin/**
+
+Use credentials from `.env` file to:
+
+- View all registered users
+- Manage uploads
+- Monitor system activity
+
+**Change admin password:** Edit `.env` and run `python manage.py initadmin`
+
+## 📊 Analytics Details
+
+### Outlier Detection (IQR Method)
+
+```
+Q1 = 25th percentile
+Q3 = 75th percentile
+IQR = Q3 - Q1
+Lower Bound = Q1 - 1.5 × IQR
+Upper Bound = Q3 + 1.5 × IQR
+```
+
+Values outside bounds are flagged as outliers (Critical status).
+
+### Correlation Analysis
+
+Pearson correlation coefficient (-1 to +1) shows relationships:
+
+- **+1**: Perfect positive correlation
+- **0**: No correlation
+- **-1**: Perfect negative correlation
+
+### Type Comparison
+
+Groups equipment by type and calculates mean Flowrate, Pressure, Temperature for each category.
+
+**For detailed analytics documentation and threshold customization, see:**
+
+- [Web Frontend README - Health Status Configuration](web-frontend/README.md#health-status-threshold-configuration)
+- [Desktop Frontend README - Health Status Logic](desktop-frontend/README.md#health-status-logic)
+
+## 🗂️ API Endpoints
+
+| Method | Endpoint             | Auth | Description                      |
+| ------ | -------------------- | ---- | -------------------------------- |
+| POST   | `/api/register/`     | No   | Create new user account          |
+| POST   | `/api/login/`        | No   | Authenticate and get JWT tokens  |
+| POST   | `/api/upload/`       | Yes  | Upload CSV file for analysis     |
+| GET    | `/api/history/`      | Yes  | Get last 5 uploads (user-scoped) |
+| GET    | `/api/uploads/<id>/` | Yes  | Get specific upload details      |
+| GET    | `/api/report/<id>/`  | Yes  | Generate PDF report              |
+
+**Authentication:** Include JWT token in header:
+
+```
+Authorization: Bearer <access_token>
+```
+
+## 🧪 Testing with Sample Data
+
+Sample CSV format (`sample_equipment_data.csv`):
+
+```csv
+Equipment Name,Type,Flowrate,Pressure,Temperature
+Pump-001,Pump,45.2,150.5,75.3
+Reactor-A1,Reactor,120.0,300.0,185.0
+...
+```
+
+**Required columns:**
+
+- Equipment Name (string)
+- Type (string)
+- Flowrate (float)
+- Pressure (float)
+- Temperature (float)
+
+## 📦 Project Dependencies
+
+### Backend
+
+- Django 6.0.1
+- Django REST Framework
+- djangorestframework-simplejwt
+- pandas
+- reportlab
+- python-dotenv
+- django-cors-headers
+
+### Web Frontend
+
+- React 18
+- Vite
+- Chart.js
+- Axios
+
+### Desktop Frontend
+
+- PyQt5
+- Matplotlib
+- Requests
+- NumPy
+
+## 🔄 Database Management
+
+## 🔄 Database Management
+
+### Reset Database (Clear all data)
 
 ```bash
 cd backend
@@ -159,11 +253,93 @@ python manage.py migrate
 python manage.py initadmin
 ```
 
-## API Endpoints
+### View Uploads
 
-- `POST /api/register/` - Register new user
-- `POST /api/login/` - Login and get JWT tokens
-- `POST /api/upload/` - Upload CSV file (requires authentication)
-- `GET /api/history/` - Get upload history (requires authentication)
-- `GET /api/uploads/<id>/` - Get specific upload details
-- `GET /api/report/<id>/` - Generate PDF report
+- **Admin Panel**: http://127.0.0.1:8000/admin/ → "Uploaded files"
+- **Database**: SQLite browser on `db.sqlite3`
+
+## 🎨 UI Theme
+
+Both web and desktop use a consistent GitHub-inspired dark theme:
+
+| Element      | Hex Color          |
+| ------------ | ------------------ |
+| Background   | `#0d1117`          |
+| Cards/Panels | `#161b22`          |
+| Borders      | `#30363d`          |
+| Text         | `#c9d1d9`          |
+| Accent       | `#58a6ff` (blue)   |
+| Success      | `#238636` (green)  |
+| Warning      | `#f59e0b` (yellow) |
+| Error        | `#ef4444` (red)    |
+
+## 🐛 Troubleshooting
+
+### Backend Issues
+
+**Port 8000 already in use:**
+
+```bash
+lsof -ti:8000 | xargs kill -9  # macOS/Linux
+# Or change port: python manage.py runserver 8001
+```
+
+**Migration errors:**
+
+```bash
+python manage.py migrate --run-syncdb
+```
+
+### Web Frontend Issues
+
+**CORS errors:**
+
+- Check `CORS_ALLOWED_ORIGINS` in `backend/.env` includes `http://localhost:5173`
+- Restart backend after `.env` changes
+
+**Charts not rendering:**
+
+- Check browser console for errors
+- Ensure Chart.js loaded: `npm list chart.js`
+
+### Desktop App Issues
+
+**"Could not connect to server":**
+
+- Ensure backend running on http://127.0.0.1:8000
+- Check firewall settings
+
+**PyQt5 import error:**
+
+```bash
+pip install --upgrade PyQt5
+# macOS: May need system Python or brew install
+```
+
+**Matplotlib display issues:**
+
+```bash
+# macOS: Set backend
+export MPLBACKEND=Qt5Agg
+```
+
+## 📝 License
+
+This project is developed as part of the FOSSEE internship screening task.
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Commit your changes
+4. Push to the branch
+5. Open a Pull Request
+
+## 📧 Contact
+
+For questions or issues, please open an issue on GitHub.
+
+---
+
+**Version:** 1.0.0  
+**Last Updated:** January 2026

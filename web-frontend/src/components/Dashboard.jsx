@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
     Chart as ChartJS,
     CategoryScale,
@@ -12,7 +12,7 @@ import {
     LineElement
 } from 'chart.js';
 import { Bar, Doughnut, Line } from 'react-chartjs-2';
-import { FaFilePdf } from 'react-icons/fa';
+import { FaFilePdf, FaChevronDown, FaChevronUp, FaExclamationTriangle, FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
 
 ChartJS.register(
     CategoryScale,
@@ -27,6 +27,10 @@ ChartJS.register(
 );
 
 const Dashboard = ({ data }) => {
+    const [showAdvanced, setShowAdvanced] = useState(false);
+    const [showOutliers, setShowOutliers] = useState(false);
+    const [showCorrelation, setShowCorrelation] = useState(false);
+    
     if (!data) return null;
 
     const { summary, processed_data, id } = data;
@@ -59,6 +63,47 @@ const Dashboard = ({ data }) => {
                 },
             ],
         };
+    }, [summary]);
+
+    // Type Comparison Chart (NEW)
+    const typeComparisonData = useMemo(() => {
+        if (!summary.type_comparison) return null;
+        const types = Object.keys(summary.type_comparison);
+        return {
+            labels: types,
+            datasets: [
+                {
+                    label: 'Avg Flowrate',
+                    data: types.map(t => summary.type_comparison[t].avg_flowrate),
+                    backgroundColor: 'rgba(88, 166, 255, 0.6)',
+                    borderColor: '#58a6ff',
+                    borderWidth: 1,
+                },
+                {
+                    label: 'Avg Pressure',
+                    data: types.map(t => summary.type_comparison[t].avg_pressure),
+                    backgroundColor: 'rgba(238, 130, 238, 0.6)',
+                    borderColor: '#ee82ee',
+                    borderWidth: 1,
+                },
+                {
+                    label: 'Avg Temperature',
+                    data: types.map(t => summary.type_comparison[t].avg_temperature),
+                    backgroundColor: 'rgba(248, 81, 73, 0.6)',
+                    borderColor: '#f85149',
+                    borderWidth: 1,
+                }
+            ]
+        };
+    }, [summary]);
+
+    // Correlation Heatmap Data (NEW)
+    const correlationData = useMemo(() => {
+        if (!summary.correlation_matrix) return null;
+        const params = ['Flowrate', 'Pressure', 'Temperature'];
+        return params.map(row => 
+            params.map(col => summary.correlation_matrix[row][col])
+        );
     }, [summary]);
 
     const statsChartData = useMemo(() => {
@@ -113,6 +158,46 @@ const Dashboard = ({ data }) => {
                 </a>
             </div>
 
+            {/* Health Overview */}
+            {summary.outliers && summary.outliers.length > 0 && (
+                <div className="glass-card" style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', borderColor: '#ef4444' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <FaExclamationTriangle size={24} color="#ef4444" />
+                        <div>
+                            <h3 style={{ margin: 0, color: '#ef4444' }}>⚠️ {summary.outliers.length} Equipment Outliers Detected</h3>
+                            <p style={{ margin: '4px 0 0 0', color: 'var(--text-secondary)' }}>
+                                Equipment with unusual parameter readings. Click to view details.
+                            </p>
+                        </div>
+                        <button 
+                            onClick={() => setShowOutliers(!showOutliers)}
+                            style={{ marginLeft: 'auto', background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '20px' }}
+                        >
+                            {showOutliers ? <FaChevronUp /> : <FaChevronDown />}
+                        </button>
+                    </div>
+                    
+                    {showOutliers && (
+                        <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #30363d' }}>
+                            {summary.outliers.map((outlier, idx) => (
+                                <div key={idx} style={{ marginBottom: '12px', padding: '12px', background: '#0d1117', borderRadius: '6px' }}>
+                                    <strong style={{ color: '#ef4444' }}>{outlier.equipment}</strong>
+                                    <div style={{ marginTop: '8px', display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
+                                        {outlier.parameters.map((param, pidx) => (
+                                            <span key={pidx} style={{ padding: '4px 8px', background: '#30363d', borderRadius: '4px', fontSize: '0.9rem' }}>
+                                                {param.parameter}: <strong>{param.value.toFixed(2)}</strong> 
+                                                <span style={{ color: '#8b949e' }}> (expected: {param.lower_bound.toFixed(2)} - {param.upper_bound.toFixed(2)})</span>
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {/* Basic Stats with Min/Max */}
             <div className="stats-grid">
                 <div className="glass-card" style={{ textAlign: 'center' }}>
                     <div className="stat-value">{summary.total_count}</div>
@@ -121,14 +206,23 @@ const Dashboard = ({ data }) => {
                 <div className="glass-card" style={{ textAlign: 'center' }}>
                     <div className="stat-value">{summary.avg_flowrate.toFixed(1)}</div>
                     <div className="stat-label">Avg Flowrate</div>
+                    <div style={{ fontSize: '0.8rem', color: '#8b949e', marginTop: '4px' }}>
+                        Min: {summary.min_flowrate.toFixed(1)} | Max: {summary.max_flowrate.toFixed(1)}
+                    </div>
                 </div>
                 <div className="glass-card" style={{ textAlign: 'center' }}>
                     <div className="stat-value">{summary.avg_pressure.toFixed(1)}</div>
                     <div className="stat-label">Avg Pressure</div>
+                    <div style={{ fontSize: '0.8rem', color: '#8b949e', marginTop: '4px' }}>
+                        Min: {summary.min_pressure.toFixed(1)} | Max: {summary.max_pressure.toFixed(1)}
+                    </div>
                 </div>
                 <div className="glass-card" style={{ textAlign: 'center' }}>
                     <div className="stat-value">{summary.avg_temperature.toFixed(1)}</div>
                     <div className="stat-label">Avg Temperature</div>
+                    <div style={{ fontSize: '0.8rem', color: '#8b949e', marginTop: '4px' }}>
+                        Min: {summary.min_temperature.toFixed(1)} | Max: {summary.max_temperature.toFixed(1)}
+                    </div>
                 </div>
             </div>
 
@@ -147,6 +241,136 @@ const Dashboard = ({ data }) => {
                 </div>
             </div>
 
+            {/* Advanced Analytics Section (Expandable) */}
+            <div className="glass-card">
+                <div 
+                    style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
+                    onClick={() => setShowAdvanced(!showAdvanced)}
+                >
+                    <h3 style={{ margin: 0 }}>🔬 Advanced Analytics</h3>
+                    <button style={{ background: 'none', border: 'none', color: '#58a6ff', cursor: 'pointer', fontSize: '20px' }}>
+                        {showAdvanced ? <FaChevronUp /> : <FaChevronDown />}
+                    </button>
+                </div>
+                
+                {showAdvanced && (
+                    <div style={{ marginTop: '24px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                        {/* Type Comparison Chart */}
+                        <div>
+                            <h4 style={{ marginBottom: '16px' }}>Equipment Type Comparison</h4>
+                            <div style={{ height: '300px' }}>
+                                <Bar 
+                                    data={typeComparisonData} 
+                                    options={{ 
+                                        responsive: true, 
+                                        maintainAspectRatio: false,
+                                        scales: { 
+                                            y: { ticks: { color: '#8b949e' }, grid: { color: '#30363d' } }, 
+                                            x: { ticks: { color: '#8b949e' }, grid: { display: false } } 
+                                        }, 
+                                        plugins: { 
+                                            legend: { 
+                                                labels: { color: '#e6edf3' },
+                                                position: 'top'
+                                            },
+                                            tooltip: {
+                                                callbacks: {
+                                                    afterLabel: function(context) {
+                                                        const type = context.label;
+                                                        const count = summary.type_comparison[type].count;
+                                                        return `Count: ${count}`;
+                                                    }
+                                                }
+                                            }
+                                        } 
+                                    }} 
+                                />
+                            </div>
+                        </div>
+
+                        {/* Correlation Heatmap */}
+                        <div>
+                            <div 
+                                style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', marginBottom: '16px' }}
+                                onClick={() => setShowCorrelation(!showCorrelation)}
+                            >
+                                <h4 style={{ margin: 0 }}>Parameter Correlation Matrix</h4>
+                                <button style={{ background: 'none', border: 'none', color: '#58a6ff', cursor: 'pointer' }}>
+                                    {showCorrelation ? 'Hide' : 'Show'}
+                                </button>
+                            </div>
+                            
+                            {showCorrelation && (
+                                <div style={{ display: 'flex', justifyContent: 'center' }}>
+                                    <table style={{ borderCollapse: 'collapse', textAlign: 'center' }}>
+                                        <thead>
+                                            <tr>
+                                                <th style={{ padding: '8px', border: '1px solid #30363d' }}></th>
+                                                <th style={{ padding: '8px', border: '1px solid #30363d' }}>Flowrate</th>
+                                                <th style={{ padding: '8px', border: '1px solid #30363d' }}>Pressure</th>
+                                                <th style={{ padding: '8px', border: '1px solid #30363d' }}>Temperature</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {['Flowrate', 'Pressure', 'Temperature'].map((row, i) => (
+                                                <tr key={row}>
+                                                    <td style={{ padding: '8px', border: '1px solid #30363d', fontWeight: 'bold' }}>{row}</td>
+                                                    {['Flowrate', 'Pressure', 'Temperature'].map((col, j) => {
+                                                        const value = correlationData[i][j];
+                                                        const intensity = Math.abs(value);
+                                                        const color = value > 0 
+                                                            ? `rgba(88, 166, 255, ${intensity})`
+                                                            : `rgba(248, 81, 73, ${intensity})`;
+                                                        return (
+                                                            <td 
+                                                                key={col} 
+                                                                style={{ 
+                                                                    padding: '16px', 
+                                                                    border: '1px solid #30363d',
+                                                                    backgroundColor: color,
+                                                                    fontWeight: 'bold'
+                                                                }}
+                                                            >
+                                                                {value.toFixed(2)}
+                                                            </td>
+                                                        );
+                                                    })}
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Statistical Summary */}
+                        <div>
+                            <h4 style={{ marginBottom: '12px' }}>Statistical Summary</h4>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
+                                <div style={{ padding: '12px', background: '#0d1117', borderRadius: '6px' }}>
+                                    <div style={{ color: '#8b949e', fontSize: '0.9rem' }}>Flowrate Std Dev</div>
+                                    <div style={{ fontSize: '1.3rem', fontWeight: 'bold', marginTop: '4px' }}>
+                                        {summary.std_flowrate.toFixed(2)}
+                                    </div>
+                                </div>
+                                <div style={{ padding: '12px', background: '#0d1117', borderRadius: '6px' }}>
+                                    <div style={{ color: '#8b949e', fontSize: '0.9rem' }}>Pressure Std Dev</div>
+                                    <div style={{ fontSize: '1.3rem', fontWeight: 'bold', marginTop: '4px' }}>
+                                        {summary.std_pressure.toFixed(2)}
+                                    </div>
+                                </div>
+                                <div style={{ padding: '12px', background: '#0d1117', borderRadius: '6px' }}>
+                                    <div style={{ color: '#8b949e', fontSize: '0.9rem' }}>Temperature Std Dev</div>
+                                    <div style={{ fontSize: '1.3rem', fontWeight: 'bold', marginTop: '4px' }}>
+                                        {summary.std_temperature.toFixed(2)}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </div>
+
             <div className="glass-card">
                 <h3>Flowrate & Temperature Trends</h3>
                 <div style={{ height: '300px' }}>
@@ -155,11 +379,12 @@ const Dashboard = ({ data }) => {
             </div>
 
             <div className="glass-card">
-                <h3>Raw Data (Top 50)</h3>
+                <h3>Equipment Data with Health Status</h3>
                 <div style={{ overflowX: 'auto' }}>
                     <table className="data-table">
                         <thead>
                             <tr>
+                                <th>Status</th>
                                 <th>Equipment Name</th>
                                 <th>Type</th>
                                 <th>Flowrate</th>
@@ -169,7 +394,12 @@ const Dashboard = ({ data }) => {
                         </thead>
                         <tbody>
                             {processed_data.slice(0, 50).map((row, idx) => (
-                                <tr key={idx}>
+                                <tr key={idx} style={{ backgroundColor: row.health_status === 'critical' ? 'rgba(239, 68, 68, 0.1)' : row.health_status === 'warning' ? 'rgba(245, 158, 11, 0.1)' : 'transparent' }}>
+                                    <td>
+                                        {row.health_status === 'critical' && <FaTimesCircle color="#ef4444" title="Critical" />}
+                                        {row.health_status === 'warning' && <FaExclamationTriangle color="#f59e0b" title="Warning" />}
+                                        {row.health_status === 'normal' && <FaCheckCircle color="#10b981" title="Normal" />}
+                                    </td>
                                     <td>{row['Equipment Name']}</td>
                                     <td>{row['Type']}</td>
                                     <td>{row['Flowrate']}</td>
