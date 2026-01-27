@@ -241,8 +241,6 @@ Reactor-A1,Reactor,120.0,300.0,185.0
 
 ## 🔄 Database Management
 
-## 🔄 Database Management
-
 ### Reset Database (Clear all data)
 
 ```bash

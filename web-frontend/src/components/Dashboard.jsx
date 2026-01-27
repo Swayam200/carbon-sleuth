@@ -30,8 +30,9 @@ const Dashboard = ({ data }) => {
     const [showAdvanced, setShowAdvanced] = useState(false);
     const [showOutliers, setShowOutliers] = useState(false);
     const [showCorrelation, setShowCorrelation] = useState(false);
+    const [showThresholds, setShowThresholds] = useState(false);
     const [thresholdSettings, setThresholdSettings] = useState(null);
-    
+
     // Fetch threshold settings on mount
     useEffect(() => {
         const fetchThresholds = async () => {
@@ -52,7 +53,7 @@ const Dashboard = ({ data }) => {
         };
         fetchThresholds();
     }, []);
-    
+
     if (!data) return null;
 
     const { summary, processed_data, id } = data;
@@ -68,18 +69,18 @@ const Dashboard = ({ data }) => {
                     label: 'Equipment Type',
                     data: values,
                     backgroundColor: [
-                        'rgba(88, 166, 255, 0.6)',
-                        'rgba(238, 130, 238, 0.6)',
-                        'rgba(46, 160, 67, 0.6)',
-                        'rgba(248, 81, 73, 0.6)',
-                        'rgba(219, 109, 40, 0.6)',
+                        'rgba(102, 252, 241, 0.6)', // Cyan
+                        'rgba(69, 162, 158, 0.6)',  // Teal
+                        'rgba(32, 252, 143, 0.6)',  // Neon Green
+                        'rgba(252, 32, 68, 0.6)',   // Neon Red
+                        'rgba(224, 168, 0, 0.6)',   // Amber
                     ],
                     borderColor: [
-                        'rgba(88, 166, 255, 1)',
-                        'rgba(238, 130, 238, 1)',
-                        'rgba(46, 160, 67, 1)',
-                        'rgba(248, 81, 73, 1)',
-                        'rgba(219, 109, 40, 1)',
+                        '#66fcf1',
+                        '#45a29e',
+                        '#20fc8f',
+                        '#fc2044',
+                        '#e0a800',
                     ],
                     borderWidth: 1,
                 },
@@ -97,22 +98,22 @@ const Dashboard = ({ data }) => {
                 {
                     label: 'Avg Flowrate',
                     data: types.map(t => summary.type_comparison[t].avg_flowrate),
-                    backgroundColor: 'rgba(88, 166, 255, 0.6)',
-                    borderColor: '#58a6ff',
+                    backgroundColor: 'rgba(102, 252, 241, 0.6)',
+                    borderColor: '#66fcf1',
                     borderWidth: 1,
                 },
                 {
                     label: 'Avg Pressure',
                     data: types.map(t => summary.type_comparison[t].avg_pressure),
-                    backgroundColor: 'rgba(238, 130, 238, 0.6)',
-                    borderColor: '#ee82ee',
+                    backgroundColor: 'rgba(69, 162, 158, 0.6)',
+                    borderColor: '#45a29e',
                     borderWidth: 1,
                 },
                 {
                     label: 'Avg Temperature',
                     data: types.map(t => summary.type_comparison[t].avg_temperature),
-                    backgroundColor: 'rgba(248, 81, 73, 0.6)',
-                    borderColor: '#f85149',
+                    backgroundColor: 'rgba(252, 32, 68, 0.6)',
+                    borderColor: '#fc2044',
                     borderWidth: 1,
                 }
             ]
@@ -123,7 +124,7 @@ const Dashboard = ({ data }) => {
     const correlationData = useMemo(() => {
         if (!summary.correlation_matrix) return null;
         const params = ['Flowrate', 'Pressure', 'Temperature'];
-        return params.map(row => 
+        return params.map(row =>
             params.map(col => summary.correlation_matrix[row][col])
         );
     }, [summary]);
@@ -135,8 +136,8 @@ const Dashboard = ({ data }) => {
                 {
                     label: 'Averages',
                     data: [summary.avg_flowrate, summary.avg_pressure, summary.avg_temperature],
-                    backgroundColor: 'rgba(88, 166, 255, 0.5)',
-                    borderColor: '#58a6ff',
+                    backgroundColor: 'rgba(102, 252, 241, 0.5)',
+                    borderColor: '#66fcf1',
                     borderWidth: 1,
                 },
             ],
@@ -153,15 +154,15 @@ const Dashboard = ({ data }) => {
                 {
                     label: 'Flowrate',
                     data: subset.map(d => d['Flowrate']),
-                    borderColor: '#58a6ff',
-                    backgroundColor: 'rgba(88, 166, 255, 0.2)',
+                    borderColor: '#66fcf1',
+                    backgroundColor: 'rgba(102, 252, 241, 0.2)',
                     tension: 0.4
                 },
                 {
                     label: 'Temperature',
                     data: subset.map(d => d['Temperature']),
-                    borderColor: '#f85149',
-                    backgroundColor: 'rgba(248, 81, 73, 0.2)',
+                    borderColor: '#fc2044',
+                    backgroundColor: 'rgba(252, 32, 68, 0.2)',
                     tension: 0.4
                 }
             ]
@@ -175,14 +176,14 @@ const Dashboard = ({ data }) => {
                 alert('Authentication token not found. Please login again.');
                 return;
             }
-            
+
             const response = await fetch(`http://127.0.0.1:8000/api/report/${id}/`, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
             });
-            
+
             if (response.ok) {
                 const blob = await response.blob();
                 const url = window.URL.createObjectURL(blob);
@@ -211,56 +212,57 @@ const Dashboard = ({ data }) => {
                     <h2>Dashboard - Upload #{id}</h2>
                     <p style={{ color: 'var(--text-secondary)' }}>Comprehensive analysis of {summary.total_count} equipment items with advanced visualizations.</p>
                 </div>
-                <button 
+                <button
                     onClick={downloadPDFReport}
-                    className="btn" 
-                    style={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        gap: '8px', 
+                    className="btn"
+                    style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
                         textDecoration: 'none',
-                        background: 'linear-gradient(135deg, #58a6ff 0%, #4a8ed9 100%)',
+                        background: 'var(--accent-color)',
                         padding: '10px 20px',
-                        borderRadius: '8px',
+                        borderRadius: '2px', // Square
                         border: 'none',
-                        color: 'white',
+                        color: '#0b0c10',
                         cursor: 'pointer',
                         fontSize: '14px',
-                        fontWeight: 'bold'
+                        fontWeight: 'bold',
+                        letterSpacing: '1px'
                     }}
                 >
-                    <FaFilePdf size={18} /> Download Comprehensive PDF Report
+                    <FaFilePdf size={18} /> GENERATE REPORT
                 </button>
             </div>
 
             {/* Health Overview */}
             {summary.outliers && summary.outliers.length > 0 && (
-                <div className="glass-card" style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', borderColor: '#ef4444' }}>
+                <div className="glass-card" style={{ backgroundColor: 'rgba(252, 32, 68, 0.05)', borderColor: '#fc2044' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <FaExclamationTriangle size={24} color="#ef4444" />
+                        <FaExclamationTriangle size={24} color="#fc2044" />
                         <div>
-                            <h3 style={{ margin: 0, color: '#ef4444' }}>⚠️ {summary.outliers.length} Equipment Outliers Detected</h3>
+                            <h3 style={{ margin: 0, color: '#fc2044' }}>⚠️ {summary.outliers.length} SYSTEM ANOMALIES DETECTED</h3>
                             <p style={{ margin: '4px 0 0 0', color: 'var(--text-secondary)' }}>
-                                Equipment with unusual parameter readings. Click to view details.
+                                Equipment exceeding operational safety parameters.
                             </p>
                         </div>
-                        <button 
+                        <button
                             onClick={() => setShowOutliers(!showOutliers)}
                             style={{ marginLeft: 'auto', background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '20px' }}
                         >
                             {showOutliers ? <FaChevronUp /> : <FaChevronDown />}
                         </button>
                     </div>
-                    
+
                     {showOutliers && (
                         <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #30363d' }}>
                             {summary.outliers.map((outlier, idx) => (
-                                <div key={idx} style={{ marginBottom: '12px', padding: '12px', background: '#0d1117', borderRadius: '6px' }}>
-                                    <strong style={{ color: '#ef4444' }}>{outlier.equipment}</strong>
+                                <div key={idx} style={{ marginBottom: '12px', padding: '12px', background: '#0b0c10', borderRadius: '2px', border: '1px solid #fc2044' }}>
+                                    <strong style={{ color: '#fc2044', fontFamily: 'var(--font-family)' }}>{outlier.equipment}</strong>
                                     <div style={{ marginTop: '8px', display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
                                         {outlier.parameters.map((param, pidx) => (
                                             <span key={pidx} style={{ padding: '4px 8px', background: '#30363d', borderRadius: '4px', fontSize: '0.9rem' }}>
-                                                {param.parameter}: <strong>{param.value.toFixed(2)}</strong> 
+                                                {param.parameter}: <strong>{param.value.toFixed(2)}</strong>
                                                 <span style={{ color: '#8b949e' }}> (expected: {param.lower_bound.toFixed(2)} - {param.upper_bound.toFixed(2)})</span>
                                             </span>
                                         ))}
@@ -272,44 +274,7 @@ const Dashboard = ({ data }) => {
                 </div>
             )}
 
-            {/* Threshold Configuration Display */}
-            {thresholdSettings && (
-                <div className="glass-card" style={{ backgroundColor: 'rgba(88, 166, 255, 0.1)', borderColor: '#58a6ff' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <FaCog size={24} color="#58a6ff" />
-                        <div>
-                            <h3 style={{ margin: 0, color: '#58a6ff' }}>⚙️ Current Threshold Configuration</h3>
-                            <p style={{ margin: '4px 0 0 0', color: 'var(--text-secondary)' }}>
-                                Analysis thresholds configured in backend .env file
-                            </p>
-                        </div>
-                    </div>
-                    
-                    <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #30363d' }}>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                            <div style={{ padding: '12px', background: '#0d1117', borderRadius: '6px' }}>
-                                <strong style={{ color: '#f59e0b', fontSize: '1.2rem' }}>
-                                    {(thresholdSettings.warning_percentile * 100).toFixed(0)}th Percentile
-                                </strong>
-                                <div style={{ marginTop: '8px', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-                                    <strong>Warning Level:</strong> Equipment with parameters above this percentile are flagged as warnings
-                                </div>
-                            </div>
-                            <div style={{ padding: '12px', background: '#0d1117', borderRadius: '6px' }}>
-                                <strong style={{ color: '#ef4444', fontSize: '1.2rem' }}>
-                                    Q3 + {thresholdSettings.outlier_iqr_multiplier} × IQR
-                                </strong>
-                                <div style={{ marginTop: '8px', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-                                    <strong>Critical/Outlier Level:</strong> Values beyond this threshold are marked as outliers
-                                </div>
-                            </div>
-                        </div>
-                        <div style={{ marginTop: '12px', padding: '8px', background: '#161b22', borderRadius: '4px', fontSize: '0.85rem', color: '#8b949e' }}>
-                            💡 <strong>Tip:</strong> To adjust these thresholds, modify <code>WARNING_PERCENTILE</code> and <code>OUTLIER_IQR_MULTIPLIER</code> in your backend <code>.env</code> file, then restart the Django server.
-                        </div>
-                    </div>
-                </div>
-            )}
+
 
             {/* Basic Stats with Min/Max */}
             <div className="stats-grid">
@@ -357,7 +322,7 @@ const Dashboard = ({ data }) => {
 
             {/* Advanced Analytics Section (Expandable) */}
             <div className="glass-card">
-                <div 
+                <div
                     style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
                     onClick={() => setShowAdvanced(!showAdvanced)}
                 >
@@ -366,45 +331,45 @@ const Dashboard = ({ data }) => {
                         {showAdvanced ? <FaChevronUp /> : <FaChevronDown />}
                     </button>
                 </div>
-                
+
                 {showAdvanced && (
                     <div style={{ marginTop: '24px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
                         {/* Type Comparison Chart */}
                         <div>
                             <h4 style={{ marginBottom: '16px' }}>Equipment Type Comparison</h4>
                             <div style={{ height: '300px' }}>
-                                <Bar 
-                                    data={typeComparisonData} 
-                                    options={{ 
-                                        responsive: true, 
+                                <Bar
+                                    data={typeComparisonData}
+                                    options={{
+                                        responsive: true,
                                         maintainAspectRatio: false,
-                                        scales: { 
-                                            y: { ticks: { color: '#8b949e' }, grid: { color: '#30363d' } }, 
-                                            x: { ticks: { color: '#8b949e' }, grid: { display: false } } 
-                                        }, 
-                                        plugins: { 
-                                            legend: { 
+                                        scales: {
+                                            y: { ticks: { color: '#8b949e' }, grid: { color: '#30363d' } },
+                                            x: { ticks: { color: '#8b949e' }, grid: { display: false } }
+                                        },
+                                        plugins: {
+                                            legend: {
                                                 labels: { color: '#e6edf3' },
                                                 position: 'top'
                                             },
                                             tooltip: {
                                                 callbacks: {
-                                                    afterLabel: function(context) {
+                                                    afterLabel: function (context) {
                                                         const type = context.label;
                                                         const count = summary.type_comparison[type].count;
                                                         return `Count: ${count}`;
                                                     }
                                                 }
                                             }
-                                        } 
-                                    }} 
+                                        }
+                                    }}
                                 />
                             </div>
                         </div>
 
                         {/* Correlation Heatmap */}
                         <div>
-                            <div 
+                            <div
                                 style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', marginBottom: '16px' }}
                                 onClick={() => setShowCorrelation(!showCorrelation)}
                             >
@@ -413,7 +378,7 @@ const Dashboard = ({ data }) => {
                                     {showCorrelation ? 'Hide' : 'Show'}
                                 </button>
                             </div>
-                            
+
                             {showCorrelation && (
                                 <div style={{ display: 'flex', justifyContent: 'center' }}>
                                     <table style={{ borderCollapse: 'collapse', textAlign: 'center' }}>
@@ -432,14 +397,14 @@ const Dashboard = ({ data }) => {
                                                     {['Flowrate', 'Pressure', 'Temperature'].map((col, j) => {
                                                         const value = correlationData[i][j];
                                                         const intensity = Math.abs(value);
-                                                        const color = value > 0 
+                                                        const color = value > 0
                                                             ? `rgba(88, 166, 255, ${intensity})`
                                                             : `rgba(248, 81, 73, ${intensity})`;
                                                         return (
-                                                            <td 
-                                                                key={col} 
-                                                                style={{ 
-                                                                    padding: '16px', 
+                                                            <td
+                                                                key={col}
+                                                                style={{
+                                                                    padding: '16px',
                                                                     border: '1px solid #30363d',
                                                                     backgroundColor: color,
                                                                     fontWeight: 'bold'
@@ -525,6 +490,55 @@ const Dashboard = ({ data }) => {
                     </table>
                 </div>
             </div>
+
+            {/* Threshold Configuration Display (Collapsible, at bottom) */}
+            {thresholdSettings && (
+                <div className="glass-card" style={{ backgroundColor: 'rgba(69, 162, 158, 0.05)', borderColor: '#45a29e' }}>
+                    <div
+                        style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
+                        onClick={() => setShowThresholds(!showThresholds)}
+                    >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <FaCog size={24} color="#45a29e" />
+                            <div>
+                                <h3 style={{ margin: 0, color: '#45a29e' }}>⚙️ SYSTEM THRESHOLDS</h3>
+                                <p style={{ margin: '4px 0 0 0', color: 'var(--text-secondary)' }}>
+                                    Active analysis configuration (Click to expand)
+                                </p>
+                            </div>
+                        </div>
+                        <button style={{ background: 'none', border: 'none', color: '#45a29e', cursor: 'pointer', fontSize: '20px' }}>
+                            {showThresholds ? <FaChevronUp /> : <FaChevronDown />}
+                        </button>
+                    </div>
+
+                    {showThresholds && (
+                        <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #30363d' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                                <div style={{ padding: '12px', background: '#0d1117', borderRadius: '6px' }}>
+                                    <strong style={{ color: '#f59e0b', fontSize: '1.2rem' }}>
+                                        {(thresholdSettings.warning_percentile * 100).toFixed(0)}th Percentile
+                                    </strong>
+                                    <div style={{ marginTop: '8px', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+                                        <strong>Warning Level:</strong> Equipment with parameters above this percentile are flagged as warnings
+                                    </div>
+                                </div>
+                                <div style={{ padding: '12px', background: '#0d1117', borderRadius: '6px' }}>
+                                    <strong style={{ color: '#ef4444', fontSize: '1.2rem' }}>
+                                        Q3 + {thresholdSettings.outlier_iqr_multiplier} × IQR
+                                    </strong>
+                                    <div style={{ marginTop: '8px', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+                                        <strong>Critical/Outlier Level:</strong> Values beyond this threshold are marked as outliers
+                                    </div>
+                                </div>
+                            </div>
+                            <div style={{ marginTop: '12px', padding: '8px', background: '#161b22', borderRadius: '4px', fontSize: '0.85rem', color: '#8b949e' }}>
+                                💡 <strong>Tip:</strong> To adjust these thresholds, modify <code>WARNING_PERCENTILE</code> and <code>OUTLIER_IQR_MULTIPLIER</code> in your backend <code>.env</code> file, then restart the Django server.
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )}
         </div>
     );
 };

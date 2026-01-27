@@ -20,98 +20,186 @@ API_URL = "http://127.0.0.1:8000/api/"
 class LoginDialog(QDialog):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Login / Register")
-        self.setFixedSize(350, 250)
+        self.setWindowTitle("Access Terminal - Verification Required")
+        self.setFixedSize(450, 600)
+        self.setWindowFlags(Qt.FramelessWindowHint | Qt.Dialog)
         
-        layout = QVBoxLayout()
+        # Load background image
+        # Absolute path to image for reliability in this script
+        img_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'src', 'assets', 'images', 'chemical_plant_login.jpg')
         
-        # Mode label
-        self.mode_label = QLabel("<b>Login to Continue</b>")
+        # Main layout with background
+        self.setStyleSheet(f"""
+            QDialog {{
+                background-image: url('{img_path}');
+                background-position: center;
+                background-repeat: no-repeat;
+                border: 2px solid #45a29e;
+            }}
+        """)
+        
+        main_layout = QVBoxLayout()
+        main_layout.setAlignment(Qt.AlignCenter)
+        
+        # Glassmorphism Container
+        self.container = QWidget()
+        self.container.setFixedSize(380, 500)
+        self.container.setStyleSheet("""
+            QWidget {
+                background-color: rgba(11, 12, 16, 0.85);
+                border: 1px solid rgba(102, 252, 241, 0.3);
+                border-radius: 4px;
+            }
+        """)
+        
+        container_layout = QVBoxLayout(self.container)
+        container_layout.setContentsMargins(30, 40, 30, 40)
+        container_layout.setSpacing(15)
+        
+        # Icon / Header
+        header_label = QLabel("SYSTEM ACCESS")
+        header_label.setAlignment(Qt.AlignCenter)
+        header_label.setStyleSheet("""
+            color: #66fcf1;
+            font-size: 24px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            background: transparent;
+            border: none;
+            margin-bottom: 5px;
+        """)
+        container_layout.addWidget(header_label)
+        
+        # Sub-header
+        self.mode_label = QLabel("> INITIATE LOGIN_SEQUENCE")
         self.mode_label.setAlignment(Qt.AlignCenter)
-        self.mode_label.setStyleSheet("font-size: 14px; margin-bottom: 10px;")
-        layout.addWidget(self.mode_label)
+        self.mode_label.setStyleSheet("""
+            color: #45a29e;
+            font-family: monospace;
+            font-size: 14px;
+            background: transparent;
+            border: none;
+            margin-bottom: 20px;
+        """)
+        container_layout.addWidget(self.mode_label)
         
-        # Form layout
-        form_layout = QFormLayout()
-        self.username = QLineEdit()
-        self.email = QLineEdit()
-        self.password = QLineEdit()
-        self.password.setEchoMode(QLineEdit.Password)
-        self.confirm_password = QLineEdit()
-        self.confirm_password.setEchoMode(QLineEdit.Password)
+        # Form inputs
+        self.username = self.create_input("USERNAME")
+        self.email = self.create_input("EMAIL_ADDRESS")
+        self.password = self.create_input("PASSWORD", is_password=True)
+        self.confirm_password = self.create_input("CONFIRM_CREDENTIALS", is_password=True)
         
-        form_layout.addRow("Username:", self.username)
-        self.email_row = form_layout.addRow("Email:", self.email)
-        form_layout.addRow("Password:", self.password)
-        self.confirm_row = form_layout.addRow("Confirm:", self.confirm_password)
+        container_layout.addWidget(self.username)
+        container_layout.addWidget(self.email)
+        container_layout.addWidget(self.password)
+        container_layout.addWidget(self.confirm_password)
         
-        layout.addLayout(form_layout)
-        
-        # Hide email and confirm password initially (login mode)
+        # Hide register fields initially
         self.email.setVisible(False)
         self.confirm_password.setVisible(False)
-        form_layout.labelForField(self.email).setVisible(False)
-        form_layout.labelForField(self.confirm_password).setVisible(False)
         
-        # Action button
-        self.action_btn = QPushButton("Login")
+        # Action Button
+        self.action_btn = QPushButton("ESTABLISH_LINK")
+        self.action_btn.setCursor(Qt.PointingHandCursor)
         self.action_btn.setStyleSheet("""
             QPushButton {
-                background-color: #238636; 
-                color: white; 
-                padding: 8px; 
+                background-color: rgba(69, 162, 158, 0.1); 
+                color: #66fcf1; 
+                padding: 12px; 
                 font-weight: bold; 
-                border-radius: 6px;
+                border: 1px solid #45a29e;
+                border-radius: 2px;
+                font-family: monospace;
+                letter-spacing: 1px;
             }
             QPushButton:hover {
-                background-color: #2ea043;
+                background-color: #45a29e;
+                color: #0b0c10;
             }
         """)
         self.action_btn.clicked.connect(self.handle_action)
-        layout.addWidget(self.action_btn)
+        container_layout.addWidget(self.action_btn)
         
-        # Toggle button
-        self.toggle_btn = QPushButton("Don't have an account? Register")
+        # Toggle Button
+        self.toggle_btn = QPushButton("[ NEW_USER? REGISTER ]")
+        self.toggle_btn.setCursor(Qt.PointingHandCursor)
         self.toggle_btn.setStyleSheet("""
             QPushButton {
                 background: none;
                 border: none;
-                color: #58a6ff;
-                text-decoration: underline;
-                padding: 5px;
+                color: #8b949e;
+                font-family: monospace;
+                font-size: 12px;
             }
             QPushButton:hover {
-                color: #79c0ff;
+                color: #66fcf1;
             }
         """)
         self.toggle_btn.clicked.connect(self.toggle_mode)
-        layout.addWidget(self.toggle_btn)
+        container_layout.addWidget(self.toggle_btn)
         
-        self.setLayout(layout)
+        # Close Button (since frameless)
+        self.exit_btn = QPushButton("TERMINATE_SESSION")
+        self.exit_btn.setCursor(Qt.PointingHandCursor)
+        self.exit_btn.setStyleSheet("""
+            QPushButton {
+                background: none;
+                border: none;
+                color: #fc2044;
+                font-family: monospace;
+                font-size: 11px;
+                margin-top: 10px;
+            }
+            QPushButton:hover {
+                text-decoration: underline;
+            }
+        """)
+        self.exit_btn.clicked.connect(self.reject)
+        container_layout.addWidget(self.exit_btn)
+        
+        container_layout.addStretch()
+        
+        main_layout.addWidget(self.container)
+        self.setLayout(main_layout)
+        
         self.is_register_mode = False
+
+    def create_input(self, placeholder, is_password=False):
+        inp = QLineEdit()
+        inp.setPlaceholderText(f"[{placeholder}]")
+        if is_password:
+            inp.setEchoMode(QLineEdit.Password)
+        inp.setStyleSheet("""
+            QLineEdit {
+                background-color: #0d1117;
+                border: 1px solid #1f2833;
+                color: #66fcf1;
+                padding: 10px;
+                font-family: monospace;
+                border-radius: 0px;
+            }
+            QLineEdit:focus {
+                border: 1px solid #66fcf1;
+                background-color: #000;
+            }
+        """)
+        return inp
 
     def toggle_mode(self):
         self.is_register_mode = not self.is_register_mode
-        form_layout = self.layout().itemAt(1).layout()
         
         if self.is_register_mode:
-            # Switch to register mode
-            self.mode_label.setText("<b>Create New Account</b>")
-            self.action_btn.setText("Register")
-            self.toggle_btn.setText("Already have an account? Login")
+            self.mode_label.setText("> INITIATE REGISTRATION_SEQUENCE")
+            self.action_btn.setText("CREATE_CREDENTIALS")
+            self.toggle_btn.setText("[ EXISTING_USER? LOGIN ]")
             self.email.setVisible(True)
             self.confirm_password.setVisible(True)
-            form_layout.labelForField(self.email).setVisible(True)
-            form_layout.labelForField(self.confirm_password).setVisible(True)
         else:
-            # Switch to login mode
-            self.mode_label.setText("<b>Login to Continue</b>")
-            self.action_btn.setText("Login")
-            self.toggle_btn.setText("Don't have an account? Register")
+            self.mode_label.setText("> INITIATE LOGIN_SEQUENCE")
+            self.action_btn.setText("ESTABLISH_LINK")
+            self.toggle_btn.setText("[ NEW_USER? REGISTER ]")
             self.email.setVisible(False)
             self.confirm_password.setVisible(False)
-            form_layout.labelForField(self.email).setVisible(False)
-            form_layout.labelForField(self.confirm_password).setVisible(False)
     
     def handle_action(self):
         if self.is_register_mode:
@@ -125,17 +213,16 @@ class LoginDialog(QDialog):
         password = self.password.text()
         confirm = self.confirm_password.text()
         
-        # Validation
         if not username or not email or not password or not confirm:
-            QMessageBox.warning(self, "Error", "All fields are required")
+            QMessageBox.warning(self, "Error", "MISSING_FIELDS")
             return
         
         if password != confirm:
-            QMessageBox.warning(self, "Error", "Passwords do not match")
+            QMessageBox.warning(self, "Error", "PASSWORD_MISMATCH")
             return
         
         if len(password) < 8:
-            QMessageBox.warning(self, "Error", "Password must be at least 8 characters")
+            QMessageBox.warning(self, "Error", "PASSWORD_TOO_SHORT_MIN_8")
             return
         
         try:
@@ -146,14 +233,13 @@ class LoginDialog(QDialog):
             })
             
             if res.status_code == 201:
-                QMessageBox.information(self, "Success", "Registration successful! Please login.")
-                # Switch to login mode
+                QMessageBox.information(self, "Success", "REGISTRATION_COMPLETE. PROCEED TO LOGIN.")
                 self.toggle_mode()
             else:
-                error_msg = res.json().get('error', 'Registration failed')
-                QMessageBox.warning(self, "Registration Failed", error_msg)
+                error_msg = res.json().get('error', 'REGISTRATION_FAILED')
+                QMessageBox.warning(self, "Failed", error_msg.upper())
         except Exception as e:
-            QMessageBox.critical(self, "Error", f"Could not connect to server: {e}")
+            QMessageBox.critical(self, "Connection Error", f"CONNECTION_FAILED: {e}")
 
     def get_credentials(self):
         return self.username.text(), self.password.text()
@@ -197,7 +283,29 @@ class MainWindow(QMainWindow):
         sidebar_widget.setLayout(sidebar_layout)
         sidebar_widget.setFixedWidth(250)
         # Give the sidebar a distinct background color
-        sidebar_widget.setStyleSheet("background-color: #0d1117; border-right: 1px solid #30363d;")
+        sidebar_widget.setStyleSheet("""
+            QWidget {
+                background-color: #0b0c10; 
+                border-right: 1px solid #1f2833;
+            }
+            QListWidget {
+                border: none;
+                background-color: #0b0c10;
+                color: #c5c6c7;
+            }
+            QListWidget::item {
+                padding: 10px;
+                border-bottom: 1px solid #1f2833;
+            }
+            QListWidget::item:selected {
+                background-color: #1f2833;
+                color: #66fcf1;
+                border-left: 3px solid #66fcf1;
+            }
+            QListWidget::item:hover {
+                background-color: #1f2833;
+            }
+        """)
 
         # --- Main Content Area ---
         main_content_layout = QVBoxLayout()
@@ -208,15 +316,17 @@ class MainWindow(QMainWindow):
         # Using a nice blue accent for the primary action
         self.upload_btn.setStyleSheet("""
             QPushButton {
-                background-color: #238636; 
-                color: white; 
-                padding: 8px 16px; 
+                background-color: rgba(69, 162, 158, 0.1); 
+                color: #66fcf1; 
+                padding: 10px 20px; 
                 font-weight: bold; 
-                border-radius: 6px;
-                border: 1px solid rgba(27,31,35,0.15);
+                border-radius: 2px;
+                border: 1px solid #45a29e;
+                font-family: monospace;
             }
             QPushButton:hover {
-                background-color: #2ea043;
+                background-color: #45a29e;
+                color: #0b0c10;
             }
         """)
         self.upload_btn.clicked.connect(self.upload_file)
@@ -228,19 +338,22 @@ class MainWindow(QMainWindow):
         self.pdf_btn = QPushButton("📄 Download PDF Report")
         self.pdf_btn.setStyleSheet("""
             QPushButton {
-                background-color: #58a6ff; 
-                color: white; 
-                padding: 8px 16px; 
+                background-color: rgba(32, 252, 143, 0.1); 
+                color: #20fc8f; 
+                padding: 10px 20px; 
                 font-weight: bold; 
-                border-radius: 6px;
-                border: 1px solid rgba(27,31,35,0.15);
+                border-radius: 2px;
+                border: 1px solid #20fc8f;
+                font-family: monospace;
             }
             QPushButton:hover {
-                background-color: #79c0ff;
+                background-color: #20fc8f;
+                color: #0b0c10;
             }
             QPushButton:disabled {
-                background-color: #30363d;
-                color: #8b949e;
+                background-color: #1f2833;
+                color: #45a29e;
+                border: 1px solid #1f2833;
             }
         """)
         self.pdf_btn.clicked.connect(self.download_pdf_report)
@@ -270,7 +383,7 @@ class MainWindow(QMainWindow):
         main_content_widget = QWidget()
         main_content_widget.setLayout(main_content_layout)
         # Main content background
-        main_content_widget.setStyleSheet("background-color: #0d1117;")
+        main_content_widget.setStyleSheet("background-color: #0b0c10;")
 
         # Combine them with a Splitter
         splitter = QSplitter(Qt.Horizontal)
@@ -281,17 +394,18 @@ class MainWindow(QMainWindow):
         
         # Remove margins to make it look cleaner
         layout.setContentsMargins(0, 0, 0, 0)
-        central_widget.setStyleSheet("background-color: #0d1117; color: #c9d1d9;")
+        central_widget.setStyleSheet("background-color: #0b0c10; color: #c5c6c7; font-family: 'JetBrains Mono', 'Consolas', monospace;")
 
         # Load initial data
         self.refresh_history()
+        self.fetch_threshold_settings()
 
     def setup_dashboard_ui(self):
         """Sets up the charts and summary cards with advanced analytics."""
         # Create scroll area for dashboard
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
-        scroll.setStyleSheet("QScrollArea { border: none; background-color: #0d1117; }")
+        scroll.setStyleSheet("QScrollArea { border: none; background-color: #0b0c10; }")
         
         container = QWidget()
         layout = QVBoxLayout(container)
@@ -308,13 +422,14 @@ class MainWindow(QMainWindow):
         for lbl in self.stat_labels.values():
             lbl.setAlignment(Qt.AlignCenter)
             lbl.setStyleSheet("""
-                background-color: #161b22; 
-                border: 1px solid #30363d; 
-                border-radius: 8px; 
-                color: #e6edf3; 
+                background-color: rgba(31, 40, 51, 0.6); 
+                border: 1px solid #1f2833; 
+                border-radius: 2px; 
+                color: #66fcf1; 
                 padding: 15px; 
                 font-size: 12px;
                 font-weight: bold;
+                font-family: monospace;
             """)
             stats_layout.addWidget(lbl)
         
@@ -324,13 +439,14 @@ class MainWindow(QMainWindow):
         self.outlier_group = QGroupBox("⚠️ Outlier Detection")
         self.outlier_group.setStyleSheet("""
             QGroupBox {
-                background-color: rgba(239, 68, 68, 0.1);
-                border: 1px solid #ef4444;
-                border-radius: 6px;
+                background-color: rgba(252, 32, 68, 0.05);
+                border: 1px solid #fc2044;
+                border-radius: 2px;
                 margin-top: 10px;
                 padding-top: 15px;
                 font-weight: bold;
-                color: #ef4444;
+                color: #fc2044;
+                font-family: monospace;
             }
             QGroupBox::title {
                 subcontrol-origin: margin;
@@ -349,10 +465,10 @@ class MainWindow(QMainWindow):
 
         # 4. Main Charts Area
         self.figure = Figure(figsize=(10, 6), dpi=100)
-        self.figure.patch.set_facecolor('#0d1117')
+        self.figure.patch.set_facecolor('#0b0c10')
         
         self.canvas = FigureCanvas(self.figure)
-        self.canvas.setStyleSheet("background-color: #0d1117;")
+        self.canvas.setStyleSheet("background-color: #0b0c10;")
         layout.addWidget(self.canvas)
 
         # 5. Advanced Analytics Section (Collapsible)
@@ -361,13 +477,14 @@ class MainWindow(QMainWindow):
         self.advanced_group.setChecked(False)
         self.advanced_group.setStyleSheet("""
             QGroupBox {
-                background-color: #161b22;
-                border: 1px solid #30363d;
-                border-radius: 6px;
+                background-color: rgba(31, 40, 51, 0.4);
+                border: 1px solid #45a29e;
+                border-radius: 2px;
                 margin-top: 10px;
                 padding-top: 15px;
                 font-weight: bold;
-                color: #58a6ff;
+                color: #45a29e;
+                font-family: monospace;
             }
             QGroupBox::title {
                 subcontrol-origin: margin;
@@ -380,14 +497,14 @@ class MainWindow(QMainWindow):
         
         # Type Comparison Chart
         self.advanced_figure = Figure(figsize=(10, 8), dpi=100)
-        self.advanced_figure.patch.set_facecolor('#0d1117')
+        self.advanced_figure.patch.set_facecolor('#0b0c10')
         self.advanced_canvas = FigureCanvas(self.advanced_figure)
-        self.advanced_canvas.setStyleSheet("background-color: #0d1117;")
+        self.advanced_canvas.setStyleSheet("background-color: #0b0c10;")
         advanced_layout.addWidget(self.advanced_canvas)
         
         # Stats summary
         self.stats_summary_label = QLabel("")
-        self.stats_summary_label.setStyleSheet("color: #8b949e; padding: 10px; background-color: #0d1117; font-size: 11px;")
+        self.stats_summary_label.setStyleSheet("color: #c5c6c7; padding: 10px; background-color: #0b0c10; font-size: 11px; font-family: monospace;")
         self.stats_summary_label.setWordWrap(True)
         advanced_layout.addWidget(self.stats_summary_label)
         
@@ -402,6 +519,42 @@ class MainWindow(QMainWindow):
         
         layout.addWidget(self.advanced_group)
         
+        # 6. System Thresholds (Collapsible, at bottom)
+        self.threshold_group = QGroupBox("System Thresholds (Click to expand)")
+        self.threshold_group.setCheckable(True)
+        self.threshold_group.setChecked(False)
+        self.threshold_group.setStyleSheet("""
+            QGroupBox {
+                background-color: rgba(69, 162, 158, 0.05);
+                border: 1px solid #45a29e;
+                border-radius: 2px;
+                margin-top: 10px;
+                padding-top: 15px;
+                font-weight: bold;
+                color: #45a29e;
+                font-family: monospace;
+            }
+            QGroupBox::title {
+                subcontrol-origin: margin;
+                left: 10px;
+                padding: 0 5px;
+            }
+        """)
+        
+        threshold_layout = QVBoxLayout()
+        self.threshold_label = QLabel("Loading settings...")
+        self.threshold_label.setStyleSheet("color: #c5c6c7; padding: 10px; background-color: #0b0c10; font-size: 11px; font-family: monospace;")
+        self.threshold_label.setWordWrap(True)
+        threshold_layout.addWidget(self.threshold_label)
+        
+        self.threshold_group.setLayout(threshold_layout)
+        
+        # Connect toggle signal
+        self.threshold_group.toggled.connect(self.toggle_thresholds)
+        self.threshold_label.setVisible(False)
+        
+        layout.addWidget(self.threshold_group)
+
         scroll.setWidget(container)
         
         # Add scroll area to dashboard tab
@@ -415,19 +568,21 @@ class MainWindow(QMainWindow):
         self.table = QTableWidget()
         self.table.setStyleSheet("""
             QTableWidget {
-                background-color: #161b22;
-                color: #c9d1d9;
-                gridline-color: #30363d;
-                border: none;
+                background-color: #0b0c10;
+                color: #c5c6c7;
+                gridline-color: #1f2833;
+                border: 1px solid #1f2833;
+                font-family: monospace;
             }
             QHeaderView::section {
-                background-color: #21262d;
-                color: #c9d1d9;
+                background-color: #1f2833;
+                color: #66fcf1;
                 padding: 4px;
-                border: 1px solid #30363d;
+                border: 1px solid #0b0c10;
+                font-weight: bold;
             }
             QTableCornerButton::section {
-                background-color: #21262d;
+                background-color: #1f2833;
             }
         """)
         layout.addWidget(self.table)
@@ -455,11 +610,11 @@ class MainWindow(QMainWindow):
             iqr = self.threshold_settings['outlier_iqr_multiplier']
             
             threshold_text = (
-                f"<b style='color: #58a6ff;'>Current Analysis Thresholds:</b><br><br>"
-                f"<b>Warning Level:</b> {int(warning * 100)}th percentile<br>"
-                f"<span style='color: #8b949e;'>Equipment with parameters above this level are marked as Warning</span><br><br>"
-                f"<b>Critical/Outlier Level:</b> Q3 + {iqr} × IQR<br>"
-                f"<span style='color: #8b949e;'>Values beyond this threshold are marked as outliers</span>"
+                f"<b style='color: #45a29e;'>ANALYSIS THRESHOLDS [ACTIVE]:</b><br><br>"
+                f"<b>Warning Lvl:</b> {int(warning * 100)}th <span style='color: #c5c6c7'>percentile</span><br>"
+                f"<span style='color: #8b949e;'>[!] Parameters exceeding this level flagged as WARNING</span><br><br>"
+                f"<b>Critical Lvl:</b> Q3 + {iqr} × IQR<br>"
+                f"<span style='color: #8b949e;'>[!] Values beyond this range marked as CRITICAL OUTLIERS</span>"
             )
             self.threshold_label.setText(threshold_text)
         else:
@@ -578,6 +733,10 @@ class MainWindow(QMainWindow):
         self.advanced_canvas.setVisible(checked)
         self.stats_summary_label.setVisible(checked)
 
+    def toggle_thresholds(self, checked):
+        """Show/hide threshold content when toggled."""
+        self.threshold_label.setVisible(checked)
+
     def update_ui(self, data):
         """Updates the dashboard and table with new data and advanced analytics."""
         self.current_data = data
@@ -603,13 +762,13 @@ class MainWindow(QMainWindow):
         outliers = summary.get('outliers', [])
         if outliers:
             self.outlier_group.setVisible(True)
-            outlier_text = f"<b style='color: #ef4444;'>{len(outliers)} Equipment with Outliers:</b><br><br>"
+            outlier_text = f"<b style='color: #fc2044;'>[ALERT] {len(outliers)} DEVICES REPORTING CRITICAL STATUS:</b><br><br>"
             for outlier in outliers[:5]:  # Show first 5
                 outlier_text += f"<b>{outlier['equipment']}</b>: "
                 params = [f"{p['parameter']} = {p['value']:.2f}" for p in outlier['parameters']]
                 outlier_text += ", ".join(params) + "<br>"
             if len(outliers) > 5:
-                outlier_text += f"<i>...and {len(outliers) - 5} more</i>"
+                outlier_text += f">>> and {len(outliers) - 5} more..."
             self.outlier_label.setText(outlier_text)
         else:
             self.outlier_group.setVisible(False)
@@ -660,7 +819,10 @@ class MainWindow(QMainWindow):
 
         # 4. Update Main Charts
         self.figure.clear()
-        text_color = '#c9d1d9'
+        text_color = '#c5c6c7'
+        accent_blue = '#66fcf1'
+        accent_teal = '#45a29e'
+        accent_red = '#fc2044'
         
         # Chart 1: Type Distribution (Pie)
         ax1 = self.figure.add_subplot(121)
@@ -679,15 +841,15 @@ class MainWindow(QMainWindow):
         ax2 = self.figure.add_subplot(122)
         params = ['Flowrate', 'Pressure', 'Temp']
         vals = [summary['avg_flowrate'], summary['avg_pressure'], summary['avg_temperature']]
-        bars = ax2.bar(params, vals, color=['#58a6ff', '#2ea043', '#f85149'])
+        bars = ax2.bar(params, vals, color=[accent_blue, accent_teal, accent_red])
         
         ax2.set_title("Average Parameters", color=text_color, fontsize=11)
         ax2.tick_params(colors=text_color, labelsize=9)
-        ax2.spines['bottom'].set_color('#30363d')
-        ax2.spines['left'].set_color('#30363d') 
+        ax2.spines['bottom'].set_color('#1f2833')
+        ax2.spines['left'].set_color('#1f2833') 
         ax2.spines['top'].set_color('none')
         ax2.spines['right'].set_color('none')
-        ax2.set_facecolor('#0d1117')
+        ax2.set_facecolor('#0b0c10')
 
         self.figure.tight_layout()
         self.canvas.draw()
@@ -701,7 +863,10 @@ class MainWindow(QMainWindow):
     def update_advanced_analytics(self, summary):
         """Updates the advanced analytics section."""
         self.advanced_figure.clear()
-        text_color = '#c9d1d9'
+        text_color = '#c5c6c7'
+        accent_blue = '#66fcf1'
+        accent_purple = '#c586c0' # Keeping distinct but techy
+        accent_red = '#fc2044'
         
         # Type Comparison Chart
         if 'type_comparison' in summary:
@@ -716,18 +881,18 @@ class MainWindow(QMainWindow):
             pressures = [type_comp[t]['avg_pressure'] for t in types]
             temps = [type_comp[t]['avg_temperature'] for t in types]
             
-            ax1.bar(x - width, flowrates, width, label='Flowrate', color='#58a6ff')
-            ax1.bar(x, pressures, width, label='Pressure', color='#ee82ee')
-            ax1.bar(x + width, temps, width, label='Temperature', color='#f85149')
+            ax1.bar(x - width, flowrates, width, label='Flowrate', color=accent_blue)
+            ax1.bar(x, pressures, width, label='Pressure', color=accent_purple)
+            ax1.bar(x + width, temps, width, label='Temperature', color=accent_red)
             
             ax1.set_title('Type Comparison', color=text_color, fontsize=10)
             ax1.set_xticks(x)
             ax1.set_xticklabels(types, rotation=45, ha='right', fontsize=8)
             ax1.tick_params(colors=text_color, labelsize=8)
-            ax1.legend(fontsize=8, facecolor='#161b22', edgecolor='#30363d', labelcolor=text_color)
-            ax1.set_facecolor('#0d1117')
+            ax1.legend(fontsize=8, facecolor='#1f2833', edgecolor='#45a29e', labelcolor=text_color)
+            ax1.set_facecolor('#0b0c10')
             for spine in ax1.spines.values():
-                spine.set_color('#30363d')
+                spine.set_color('#1f2833')
         
         # Correlation Heatmap
         if 'correlation_matrix' in summary:
@@ -748,11 +913,11 @@ class MainWindow(QMainWindow):
             for i in range(len(params)):
                 for j in range(len(params)):
                     text = ax2.text(j, i, f'{corr_data[i, j]:.2f}',
-                                   ha="center", va="center", color='white' if abs(corr_data[i, j]) > 0.5 else 'black',
+                                   ha="center", va="center", color='white' if abs(corr_data[i, j]) > 0.5 else '#0b0c10',
                                    fontsize=9)
             
             ax2.set_title('Correlation Matrix', color=text_color, fontsize=10)
-            ax2.set_facecolor('#0d1117')
+            ax2.set_facecolor('#0b0c10')
             
             # Colorbar
             cbar = self.advanced_figure.colorbar(im, ax=ax2)
@@ -766,12 +931,12 @@ class MainWindow(QMainWindow):
             summary.get('std_pressure', 0),
             summary.get('std_temperature', 0)
         ]
-        ax3.bar(std_params, std_vals, color=['#58a6ff', '#2ea043', '#f85149'])
+        ax3.bar(std_params, std_vals, color=[accent_blue, accent_purple, accent_red])
         ax3.set_title('Standard Deviation', color=text_color, fontsize=10)
         ax3.tick_params(colors=text_color, labelsize=8)
-        ax3.set_facecolor('#0d1117')
+        ax3.set_facecolor('#0b0c10')
         for spine in ax3.spines.values():
-            spine.set_color('#30363d')
+            spine.set_color('#1f2833')
         
         # Health Status Distribution
         ax4 = self.advanced_figure.add_subplot(224)
@@ -782,8 +947,9 @@ class MainWindow(QMainWindow):
                 status = row.get('health_status', 'normal')
                 health_counts[status] += 1
             
-            colors_map = {'normal': '#10b981', 'warning': '#f59e0b', 'critical': '#ef4444'}
-            labels = [f"{k.capitalize()}\n({v})" for k, v in health_counts.items() if v > 0]
+            
+            colors_map = {'normal': '#20fc8f', 'warning': '#e0a800', 'critical': '#fc2044'}
+            labels = [f"{k.upper()}\n({v})" for k, v in health_counts.items() if v > 0]
             values = [v for v in health_counts.values() if v > 0]
             colors = [colors_map[k] for k, v in health_counts.items() if v > 0]
             
