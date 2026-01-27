@@ -81,7 +81,6 @@ backend/media/uploads/*
 .cursor/
 .factory/
 .gemini/
-.github/
 .goose/
 .kilocode/
 .kiro/
