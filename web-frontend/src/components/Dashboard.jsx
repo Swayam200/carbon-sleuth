@@ -38,7 +38,8 @@ const Dashboard = ({ data }) => {
         const fetchThresholds = async () => {
             try {
                 const token = localStorage.getItem('access_token');
-                const response = await fetch('http://127.0.0.1:8000/api/thresholds/', {
+                const baseUrl = import.meta.env.VITE_API_URL || '/api';
+                const response = await fetch(`${baseUrl}/thresholds/`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
@@ -177,7 +178,8 @@ const Dashboard = ({ data }) => {
                 return;
             }
 
-            const response = await fetch(`http://127.0.0.1:8000/api/report/${id}/`, {
+            const baseUrl = import.meta.env.VITE_API_URL || '/api';
+            const response = await fetch(`${baseUrl}/report/${id}/`, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`
