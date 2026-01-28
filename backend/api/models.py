@@ -10,9 +10,17 @@ class UploadedFile(models.Model):
     uploaded_at = models.DateTimeField(auto_now_add=True)
     summary = models.JSONField(default=dict)  # Stores calculated stats
     processed_data = models.JSONField(default=list)  # Stores the parsed CSV rows
+    user_upload_index = models.PositiveIntegerField(blank=True, null=True, editable=False)
+
+    def save(self, *args, **kwargs):
+        if not self.user_upload_index:
+            # simple auto-increment logic scoped to the user
+            max_index = UploadedFile.objects.filter(user=self.user).aggregate(models.Max('user_upload_index'))['user_upload_index__max']
+            self.user_upload_index = (max_index or 0) + 1
+        super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"Upload {self.id} by {self.user.username} - {self.uploaded_at}"
+        return f"Upload {self.user_upload_index} by {self.user.username} - {self.uploaded_at}"
 
     class Meta:
         ordering = ['-uploaded_at']
