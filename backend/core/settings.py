@@ -142,8 +142,12 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:5174",
     "https://swayam200.github.io",
     "https://swayam200.me",
+    "https://chemical-equipment-parameter.vercel.app",
 ]
 CORS_ALLOW_CREDENTIALS = True
+
+from corsheaders.defaults import default_methods
+CORS_ALLOW_METHODS = list(default_methods)
 
 # DRF Configuration
 REST_FRAMEWORK = {
