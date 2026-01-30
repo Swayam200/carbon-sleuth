@@ -1,8 +1,19 @@
+/**
+ * API Client Module
+ * Configures Axios instance with:
+ * - Relative base URL for Vercel proxy
+ * - JWT token refresh interceptor
+ * - Error message formatting utilities
+ *
+ * @module api
+ */
 import axios from 'axios';
 
+/**
+ * Configured Axios instance.
+ * Uses relative '/api' path for Vercel rewrites to proxy to backend.
+ */
 const api = axios.create({
-  // Use relative path so requests go to the same domain (Vercel),
-  // hitting the 'rewrites' rule in vercel.json which proxies to VPS.
   baseURL: '/api',
 });
 
@@ -54,8 +65,20 @@ api.interceptors.response.use(
   }
 );
 
-// Helper function to format error messages for users
+/**
+ * Formats API errors into user-friendly messages.
+ * Handles various backend error formats:
+ * - String errors
+ * - { error: string }
+ * - { detail: string }
+ * - { field: [errors] } (validation)
+ * - Network errors
+ *
+ * @param {Error} error - Axios error object
+ * @returns {string} Human-readable error message
+ */
 export const formatErrorMessage = (error) => {
+
   if (error.response?.data) {
     const data = error.response.data;
 
