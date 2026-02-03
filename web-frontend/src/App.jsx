@@ -13,7 +13,8 @@ function App() {
   const [username, setUsername] = useState('');
   const [theme, setTheme] = useState(() => {
     const saved = localStorage.getItem('theme');
-    return saved || 'dark';
+    // Default to light mode (or system preference in future) instead of 'dark'
+    return saved || 'light';
   });
 
 
