@@ -12,6 +12,7 @@ import {
 } from 'chart.js';
 import FileUpload from '../components/FileUpload';
 import api from '../api';
+import { queryAI } from '../services/aiService';
 import { chartColors } from '../chartConfig';
 import { useSearch } from '../context/SearchContext';
 
@@ -98,31 +99,39 @@ const MainPage = ({ data, onUploadSuccess, theme = 'dark' }) => { // Default to 
 
     // --- Actions ---
     // --- Actions ---
+    // --- Actions ---
     const handleExport = async () => {
-        if (!data?.id) return;
+        console.log("Export triggered. Data object:", data);
+
+        if (!data?.id) {
+            console.error("Export failed: missing data.id");
+            alert("Error: No report ID found. Please try uploading the file again.");
+            return;
+        }
 
         // Ask user if they want AI summary
         const wantSummary = window.confirm("Would you like to include a fresh AI-generated executive summary in the PDF?\n(This takes a few seconds provided by our intelligent engine)");
+        console.log("User wantSummary:", wantSummary);
 
         try {
             if (wantSummary) {
                 try {
-                    // 1. Generate Summary
-                    const { queryAI } = await import('../services/aiService');
-
+                    console.log("Starting AI Summary generation...");
                     const context = {
                         summary: summary,
                     };
                     const query = "Generate a professional executive summary for this equipment data report. Highlight key statistics, the number of outliers, and the general health of the system. Keep it concise (approx 150 words) and suitable for a formal PDF report.";
 
                     const aiResponse = await queryAI(context, query);
+                    console.log("AI Response received:", aiResponse);
 
                     // 2. Save to Backend
                     if (aiResponse && !aiResponse.startsWith("Error:")) {
                         await api.saveAISummary(data.id, aiResponse);
+                        console.log("AI Summary saved to backend.");
                     } else {
                         console.warn("AI Generation failed or returned error:", aiResponse);
-                        alert("AI Summary could not be generated, but the report will still be downloaded.\nReason: " + aiResponse);
+                        alert("AI Summary generation encountered an issue, but the PDF will still be downloaded.");
                     }
                 } catch (aiError) {
                     console.error("AI Summary generation failed:", aiError);
@@ -131,7 +140,10 @@ const MainPage = ({ data, onUploadSuccess, theme = 'dark' }) => { // Default to 
             }
 
             // 3. Download PDF (Proceeds regardless of AI success)
+            console.log("Requesting PDF download for ID:", data.id);
             const response = await api.get(`/report/${data.id}/`, { responseType: 'blob' });
+            console.log("PDF Blob received, size:", response.data.size);
+
             const url = window.URL.createObjectURL(new Blob([response.data]));
             const link = document.createElement('a');
             link.href = url;
@@ -139,9 +151,10 @@ const MainPage = ({ data, onUploadSuccess, theme = 'dark' }) => { // Default to 
             document.body.appendChild(link);
             link.click();
             link.parentNode.removeChild(link);
+            console.log("Download link clicked and removed.");
         } catch (error) {
-            console.error("Export failed", error);
-            alert("Failed to download export. Please check your network connection.");
+            console.error("Export logic failed:", error);
+            alert("Failed to download export. Please check console for details.");
         }
     };
 
