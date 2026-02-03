@@ -28,6 +28,16 @@ ChartJS.register(
     ArcElement
 );
 
+/**
+ * Main Dashboard Page
+ * Serves as the landing page for the application.
+ * Features:
+ * - KPI Cards (Total Count, Averages, status chips)
+ * - Equipment Distribution Chart (Doughnut)
+ * - Parameter Averages Chart (Bar)
+ * - Outlier/Anomaly Alert Banner
+ * - CSV Upload Modal Trigger
+ */
 const MainPage = ({ data, onUploadSuccess, theme = 'dark' }) => { // Default to dark if undefined
     const [showUploadModal, setShowUploadModal] = useState(false);
     const [showDiagnostics, setShowDiagnostics] = useState(false);

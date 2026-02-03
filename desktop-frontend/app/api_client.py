@@ -11,13 +11,18 @@ DEFAULT_API_URL = "http://127.0.0.1:8000/api/"
 
 class ApiClient:
     """
-    Encapsulates all API calls to the Django backend.
-    Manages auth header and provides typed methods for each endpoint.
+    Handles communication with the Django Backend API.
+    Manages authentication (JWT), file uploads, and data retrieval.
     """
-
     def __init__(self, base_url: str = DEFAULT_API_URL):
-        self.base_url = base_url
-        self.auth_header: Optional[str] = None
+        """
+        Initialize the API client.
+        :param base_url: The root URL of the backend API (e.g., http://localhost:8000/api)
+        """
+        self.base_url = base_url.rstrip('/')
+        self.auth_header: Optional[str] = None # Keeping original auth_header for consistency with other methods
+        # self.access_token = None # Not adding these as they conflict with existing auth_header usage
+        # self.refresh_token = None # Not adding these as they conflict with existing auth_header usage
 
     def set_auth(self, token: str) -> None:
         """Set the JWT auth header for authenticated requests."""
@@ -38,12 +43,12 @@ class ApiClient:
 
     def login(self, username: str, password: str) -> Tuple[bool, Dict[str, Any]]:
         """
-        Authenticate user and get JWT tokens.
-        Returns (success, response_data).
+        Authenticate user and retrieve JWT tokens.
+        :return: (Success: bool, Response Data: dict)
         """
         try:
             res = requests.post(
-                f"{self.base_url}login/",
+                f"{self.base_url}/login/", # Changed to use self.base_url.rstrip('/') and added trailing slash
                 data={'username': username, 'password': password}
             )
             if res.status_code == 200:

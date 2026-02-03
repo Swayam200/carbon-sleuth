@@ -223,6 +223,17 @@ class ThresholdSettingsView(APIView):
         }, status=status.HTTP_200_OK)
 
 class FileUploadView(APIView):
+    """
+    Handles CSV file uploads and performs data analysis.
+    
+    POST:
+    - Accepts a CSV file.
+    - Validates file format/content.
+    - Saves file to disk/DB.
+    - Performs statistical analysis (Pandas).
+    - Detects outliers using IQR.
+    - Returns analysis summary + processed data.
+    """
     permission_classes = [IsAuthenticated]
     
     def post(self, request, *args, **kwargs):
@@ -251,7 +262,13 @@ class FileUploadView(APIView):
             if not required_columns.issubset(df.columns):
                 raise ValueError(f"Missing required columns. Expected: {required_columns}")
 
-            # === ENHANCED ANALYTICS ===
+            # === ENHANCED ANALYTICS BLOCK ===
+            # The following section performs 5 key analysis steps:
+            # 1. Basic Stats (Min, Max, Mean, Std)
+            # 2. Type-based grouping
+            # 3. Correlation Matrix
+            # 4. Outlier Detection (IQR Method)
+            # 5. Health Status Classification
             
             # 1. Basic Statistics with Min/Max/Std Dev
             numeric_cols = ['Flowrate', 'Pressure', 'Temperature']
@@ -395,6 +412,14 @@ class UpdateAISummaryView(APIView):
             return Response({"error": "Upload not found"}, status=status.HTTP_404_NOT_FOUND)
 
 class PDFReportView(APIView):
+    """
+    Generates a professional PDF report using ReportLab.
+    
+    GET:
+    - Returns a downloadable PDF file for a specific upload.
+    - Includes summary stats, AI insights (if available), and visualization charts.
+    - Charts are generated on-the-fly using Matplotlib (Agg backend).
+    """
     permission_classes = [IsAuthenticated]
     
     # Professional color scheme

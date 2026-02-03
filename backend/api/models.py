@@ -5,6 +5,11 @@ from django.dispatch import receiver
 from django.db.models.signals import post_delete
 
 class UploadedFile(models.Model):
+    """
+    Represents a CSV file uploaded by a user.
+    Stores metadata, calculated summaries, and processed data json.
+    AUTO-DELETION: Only the last 5 uploads per user are kept.
+    """
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='uploads')
     file = models.FileField(upload_to='uploads/')
     uploaded_at = models.DateTimeField(auto_now_add=True)

@@ -29,6 +29,16 @@ ChartJS.register(
     Legend
 );
 
+/**
+ * Advanced Analytics Page
+ * Allows users to perform deep-dive analysis on equipment data.
+ * Features:
+ * - Trend Analysis (Line Chart)
+ * - Efficiency Comparison (Bar Chart)
+ * - Correlation Matrix (Heatmap visualization)
+ * - Raw Data Table with filtering
+ * - AI Anomaly Prediction
+ */
 const AdvancedAnalyticsPage = ({ data, theme = 'dark' }) => {
     const { searchQuery } = useSearch();
 
@@ -48,6 +58,8 @@ const AdvancedAnalyticsPage = ({ data, theme = 'dark' }) => {
     const [predictionResult, setPredictionResult] = useState(null);
     const [isPredicting, setIsPredicting] = useState(false);
 
+    // AI Prediction Handler
+    // Sends summary statistics to the AI service to identify potential risks.
     const handleRunPrediction = async () => {
         setIsPredicting(true);
         try {

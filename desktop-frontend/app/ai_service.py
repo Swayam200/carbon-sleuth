@@ -10,7 +10,16 @@ AI_MODEL = os.getenv("VITE_AI_MODEL") or "google/gemma-2-9b-it:free"
 def generate_ai_response(user_query: str, context_data: dict) -> dict:
     """
     Generates an AI response based on the user query and dashboard context.
-    Mirroring the logic from web-frontend/src/services/aiService.js
+    Mirroring the logic from web-frontend/src/services/aiService.js.
+    
+    This function:
+    1. Constructs a system prompt with the current data context.
+    2. Sends a request to the LLM provider (OpenRouter).
+    3. Parses the response for 'Action Tags' (e.g., |ACTION:SEARCH:X|).
+    
+    :param user_query: The question or command from the user.
+    :param context_data: JSON object containing current dashboard statistics/data.
+    :return: Dict containing 'response' (text) and 'action' (parsed command).
     """
     if not user_query:
         return None

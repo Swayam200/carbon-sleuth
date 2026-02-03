@@ -63,12 +63,17 @@ class MainWindow(QMainWindow):
         self._load_initial_data()
 
     def _setup_window(self) -> None:
-        """Configure window properties."""
+        """
+        Configure basic window properties (title, dimensions).
+        """
         self.setWindowTitle("Carbon Sleuth - Industrial Analytics (Desktop)")
         self.resize(1280, 850)
 
     def _setup_ui(self) -> None:
-        """Build the main window UI."""
+        """
+        Build the main window UI structure.
+        Uses a QSplitter to separate the Sidebar (History) and Main Content (Dashboard).
+        """
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
         central_widget.setStyleSheet(styles.MAIN_WINDOW_STYLE)
@@ -209,7 +214,16 @@ class MainWindow(QMainWindow):
     # --- Dashboard Tab Setup ---
 
     def _setup_dashboard_tab(self) -> None:
-        """Set up the dashboard tab with charts and stats."""
+        """
+        Set up the dashboard tab with charts and stats.
+        Includes:
+        - View Filters (CheckBoxes)
+        - KPI Stats Cards
+        - Outlier Alert Banner
+        - Primary Matplotlib Canvas (Trends)
+        - Advanced Analytics Group (Correlation/Efficiency)
+        - Threshold Settings Group
+        """
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setStyleSheet(styles.SCROLL_AREA_STYLE)
@@ -480,7 +494,12 @@ class MainWindow(QMainWindow):
             self._update_table(self.current_data['processed_data'])
 
     def _handle_ai_query(self) -> None:
-        """Send query to AI and handle response using a worker thread."""
+        """
+        Handle user AI queries from the search bar.
+        1. Validates input and data presence.
+        2. Spawns a background thread (AIWorker) to prevent UI freezing.
+        3. Updates status label to 'Thinking...'.
+        """
         query = self.search_input.text().strip()
         if not query:
             return
