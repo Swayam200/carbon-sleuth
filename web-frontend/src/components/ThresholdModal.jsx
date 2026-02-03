@@ -32,13 +32,35 @@ const ThresholdModal = ({ onClose }) => {
     };
 
     const handleSave = async () => {
+        // Client-side validation
+        const wp = parseFloat(settings.warning_percentile);
+        const iqr = parseFloat(settings.outlier_iqr_multiplier);
+
+        if (isNaN(wp) || wp < 0.50 || wp > 0.95) {
+            setError("Warning Percentile must be between 0.50 (50%) and 0.95 (95%).");
+            return;
+        }
+
+        if (isNaN(iqr) || iqr < 0.5 || iqr > 3.0) {
+            setError("Outlier Multiplier must be between 0.5 and 3.0.");
+            return;
+        }
+
         try {
             setSaving(true);
             setError(null);
-            await api.put('thresholds/', settings);
+
+            // Send sanitized numbers
+            const payload = {
+                warning_percentile: wp,
+                outlier_iqr_multiplier: iqr
+            };
+
+            await api.put('thresholds/', payload);
             setSuccess('Settings saved successfully!');
             setTimeout(() => setSuccess(null), 3000);
         } catch (err) {
+            console.error("Threshold update failed:", err);
             setError(formatErrorMessage(err));
         } finally {
             setSaving(false);
