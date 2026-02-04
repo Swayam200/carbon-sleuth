@@ -85,7 +85,34 @@ Equipment is classified into three health statuses based on `.env` settings:
 
 ---
 
-## Deployment (Manual)
+## 🧠 Algorithms & Data Processing
+ 
+ ### 1. Outlier Detection (Interquartile Range)
+ Carbon Sleuth uses the **IQR method** to identify anomalies in sensor data. This is robust against non-normal distributions.
+ 
+ - **Formula**:
+   - $IQR = Q3 - Q1$
+   - $Lower Bound = Q1 - (Multiplier \times IQR)$
+   - $Upper Bound = Q3 + (Multiplier \times IQR)$
+ - **Configuration**: The `Multiplier` defaults to `1.5` but can be adjusted in the user settings (0.5 to 3.0).
+ 
+ ### 2. Health Status Classification
+ Each equipment unit is assigned a status based on its parameters:
+ 
+ | Status | Criteria | Visual Indicator |
+ |--------|----------|------------------|
+ | **Normal** | All parameters are within safe ranges. | 🟢 Green |
+ | **Warning** | One or more parameters exceed the **Warning Percentile** (default: 75th percentile). | 🟡 Yellow |
+ | **Critical** | Any parameter detects as an statistical **outlier**. | 🔴 Red |
+ 
+ ### 3. PDF Generation
+ - **Library**: `ReportLab`
+ - **Dynamic Scaling**: Charts are generated on-the-fly using `Matplotlib` (Agg backend) based on the *current* user thresholds.
+ - **AI Integration**: Embeds AI-generated executive summaries directly into the report layout.
+ 
+ ---
+ 
+ ## Deployment (Manual)
 
 **Note:** Ensure you have SSH access to your server.
 
